@@ -1,14 +1,13 @@
 package com.example.bodytracking
 
 import android.Manifest
+import android.content.ContentValues
 import android.content.pm.PackageManager
-import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
-import android.widget.TextView
 import androidx.activity.ComponentActivity
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
@@ -20,33 +19,26 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.activity.compose.setContent
 import androidx.camera.core.ImageAnalysis
-import androidx.compose.foundation.background
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import java.io.File
+import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
 
@@ -114,24 +106,93 @@ class MainActivity : AppCompatActivity() {
 @Composable
 fun CameraPreview() {
 
+    val context = LocalContext.current
+
     var isFrontCamera by remember { mutableStateOf(false) }
+    val imageCapture = remember {
+        ImageCapture.Builder().build()
+    }
     Box(modifier = Modifier.fillMaxSize()){
         CameraPreviewContent(
-            cameraPosition = isFrontCamera
+            cameraPosition = isFrontCamera,
+            imageCapture = imageCapture
         )
 
         PoseDisplay()
 
-        Button(onClick = {isFrontCamera = !isFrontCamera},
-            modifier = Modifier
-                .align(androidx.compose.ui.Alignment.BottomEnd)
-                .padding(10.dp),
-            shape = CircleShape
-                ) {
-            Icon(painter = painterResource(id = R.drawable.outline_3d_rotation_24),
-                contentDescription = "this is ")
+        Row (modifier = Modifier
+            .align(androidx.compose.ui.Alignment.BottomEnd)
+            .padding(10.dp)){
 
+
+            Button(
+                onClick = {
+
+                    val contentValues = ContentValues().apply {
+                        put(MediaStore.MediaColumns.DISPLAY_NAME, "photo_${System.currentTimeMillis()}.jpg")
+                        put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+                        put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/BodyTracking")
+                    }
+
+                    val outputOptions =
+                        ImageCapture.OutputFileOptions.Builder(
+                            context.contentResolver,
+                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                            contentValues
+                        ).build()
+
+                    val photoFile = File(
+                        context.filesDir,
+                        "photo.jpg"
+                    )
+
+//                    val outputOptions =
+//                        ImageCapture.OutputFileOptions
+//                            .Builder(photoFile)
+//                            .build()
+
+                    imageCapture.takePicture(
+                        outputOptions,
+                        ContextCompat.getMainExecutor(context),
+                        object : ImageCapture.OnImageSavedCallback {
+
+                            override fun onImageSaved(
+                                outputFileResults: ImageCapture.OutputFileResults
+                            ) {
+                                Log.d("Camera", "Saved")
+                                Log.d("path", "${outputFileResults.savedUri}")
+                            }
+
+                            override fun onError(
+                                exception: ImageCaptureException
+                            ) {
+                                Log.e("Camera", "Error", exception)
+                            }
+                        }
+                    )
+                }
+            ) {
+                Text("Capture")
+            }
+
+
+            Button(onClick = {isFrontCamera = !isFrontCamera},
+                modifier = Modifier
+
+                    .padding(10.dp),
+                shape = CircleShape
+            ) {
+                Icon(painter = painterResource(id = R.drawable.outline_3d_rotation_24),
+                    contentDescription = "this is ")
+
+            }
         }
+
+
+
+
+
+
     }
 
 
@@ -139,7 +200,9 @@ fun CameraPreview() {
 }
 
 @Composable
-fun CameraPreviewContent(cameraPosition: Boolean){
+fun CameraPreviewContent(cameraPosition: Boolean,
+                       imageCapture: ImageCapture
+                              ){
 
     val context = LocalContext.current
 
@@ -153,22 +216,31 @@ fun CameraPreviewContent(cameraPosition: Boolean){
         update = {
             previewView ->
 
+            val executor = Executors.newSingleThreadExecutor()
+
             val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
             cameraProviderFuture.addListener({
+
+
+
                 val cameraProvider = cameraProviderFuture.get()
 
                 val preview = Preview.Builder().build()
 
                 val imageAnalysis =                  // analysing the frame
                     ImageAnalysis.Builder()
+                        .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         .build()
 
-                imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(context))
+                imageAnalysis.setAnalyzer(executor)
                 {imageProxy ->
 
                     val bitmap =
                         imageProxy.toBitmap()
+                            ?.rotate(
+                                imageProxy.imageInfo.rotationDegrees.toFloat()
+                            )
 
                     if (bitmap != null){
                         poseDetector.detectLive(bitmap)
@@ -179,6 +251,8 @@ fun CameraPreviewContent(cameraPosition: Boolean){
                 }
 
                 preview.surfaceProvider = previewView.surfaceProvider
+
+
 
                 val cameraSelector =
                     if (cameraPosition){
@@ -193,7 +267,8 @@ fun CameraPreviewContent(cameraPosition: Boolean){
                     context as ComponentActivity,
                     cameraSelector,
                     preview,
-                    imageAnalysis
+                    imageAnalysis,
+                    imageCapture
                 )
             }, ContextCompat.getMainExecutor(context))
         }
