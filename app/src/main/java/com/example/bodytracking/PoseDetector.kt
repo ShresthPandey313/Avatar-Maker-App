@@ -57,23 +57,22 @@ class PoseDetector(
         val result =
             poseLandmarker.detect(mpImage)
 
-        if(result.landmarks().size > 0){
-            val landmarkCount =
-                result.landmarks()[0][0]
+        PoseState.landmark.clear()
 
-            frameCounter++
+        if (result.landmarks().size > 0){
 
-//            if (frameCounter % 15 == 0){
+            val pose = result.landmarks()[0]
 
-                Log.d(
-                    "POSE_LANDMARKS",
-                    "x = ${landmarkCount.x()}, y = ${landmarkCount.y()}"
+            pose.forEach { landmark ->
+
+                PoseState.landmark.add(
+                    Pair(landmark.x(), landmark.y())
                 )
 
-//            }
-        }else{
-            Log.d("POSE_LANDMARKS", "no pose detected")
+            }
+
         }
+
 
     }
 

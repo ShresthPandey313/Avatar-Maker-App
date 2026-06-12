@@ -120,6 +120,8 @@ fun CameraPreview() {
             cameraPosition = isFrontCamera
         )
 
+        PoseDisplay()
+
         Button(onClick = {isFrontCamera = !isFrontCamera},
             modifier = Modifier
                 .align(androidx.compose.ui.Alignment.BottomEnd)
