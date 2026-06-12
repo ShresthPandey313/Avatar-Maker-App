@@ -1,0 +1,172 @@
+package com.example.bodytracking
+
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Bundle
+import android.widget.TextView
+import androidx.activity.ComponentActivity
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Text
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+class MainActivity : AppCompatActivity() {
+
+    private var hasCameraPermission = mutableStateOf(false)
+    private val cameraPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        hasCameraPermission.value = granted
+    }
+
+
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        hasCameraPermission.value = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (!hasCameraPermission.value) {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+
+        setContent {
+            if (hasCameraPermission.value) {
+//                Hello()
+                CameraPreview()
+            }
+        }
+
+    }
+
+}
+
+@Composable
+fun CameraPreview() {
+
+    Column {
+        Box(modifier = Modifier
+            .padding(start = 18.dp, top = 30.dp)
+            .background(color = Color.Red)
+
+        ){
+            Text(text = "Camera is opened",
+                modifier = Modifier,
+                color = Color.Blue,
+                fontSize = 15.sp
+            )
+
+
+        }
+
+        Box(modifier = Modifier.padding(20.dp)
+            ){
+
+            val context = LocalContext.current
+
+            AndroidView(
+                factory = { ctx ->
+
+                    val previewView = PreviewView(ctx)
+
+                    val cameraProviderFuture =
+                        ProcessCameraProvider.getInstance(ctx)
+
+                    cameraProviderFuture.addListener({
+
+                        val cameraProvider =
+                            cameraProviderFuture.get()
+
+                        val preview =
+                            Preview.Builder().build()
+
+                        preview.surfaceProvider =
+                            previewView.surfaceProvider
+
+                        val cameraSelector =
+                            CameraSelector.DEFAULT_BACK_CAMERA
+
+                        cameraProvider.unbindAll()
+
+                        cameraProvider.bindToLifecycle(
+                            context as ComponentActivity,
+                            cameraSelector,
+                            preview
+                        )
+
+                    }, ContextCompat.getMainExecutor(ctx))
+
+                    previewView
+                }
+            )
+        }
+
+        Box(modifier = Modifier.fillMaxSize()){
+            Card(
+                modifier = Modifier
+                    .padding(100.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White.copy(alpha = 0.1f)
+                )
+            ) {
+                Text(text = "Hello world",
+                    modifier = Modifier.padding(20.dp))
+            }
+        }
+
+    }
+
+
+}
+
+//@Composable
+//fun Hello(){
+//    Box(modifier = Modifier
+//        .padding(20.dp)
+//        .background(color = Color.Red)
+//
+//    ){
+//        Text(text = "Hello World",
+//            modifier = Modifier
+//                .padding(5.dp),
+//            color = Color.Blue,
+//            fontSize = 12.sp
+//        )
+//
+//
+//    }
+//}
+
+
+
