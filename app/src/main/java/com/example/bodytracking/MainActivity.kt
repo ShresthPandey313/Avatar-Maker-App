@@ -2,7 +2,10 @@ package com.example.bodytracking
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
+import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
@@ -20,6 +23,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.activity.compose.setContent
+import androidx.camera.core.ImageAnalysis
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,6 +39,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -42,8 +47,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import java.nio.file.WatchEvent
 
 class MainActivity : AppCompatActivity() {
 
@@ -59,6 +62,9 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        Log.d("DEVICE_INFO", Build.MODEL)
+        Log.d("DEVICE_INFO", Build.VERSION.SDK_INT.toString())
+
         hasCameraPermission.value = ContextCompat.checkSelfPermission(
             this,
             Manifest.permission.CAMERA
@@ -71,9 +77,35 @@ class MainActivity : AppCompatActivity() {
         setContent {
             if (hasCameraPermission.value) {
 //                Hello()
+//                val detector = PoseDetector(this)
+//                LaunchedEffect(Unit) {
+//                    val inputStream =
+//                        assets.open("person.jpg")
+//
+//                    val bitmap =
+//                        BitmapFactory.decodeStream(inputStream)
+//
+//                    detector.detectLive(bitmap)
+//                }
                 CameraPreview()
             }
         }
+
+
+//        setContent {
+//            if (hasCameraPermission.value) {
+//
+//                val inputStream = assets.open("person.jpg")
+//
+//                val bitmap =
+//                    BitmapFactory.decodeStream(inputStream)
+//
+//                Log.d(
+//                    "POSE_TEST",
+//                    "Bitmap loaded ${bitmap.width} x ${bitmap.height}"
+//                )
+//            }
+//        }
 
     }
 
@@ -94,7 +126,8 @@ fun CameraPreview() {
                 .padding(10.dp),
             shape = CircleShape
                 ) {
-            Icon(painter = painterResource(id = R.drawable.outline_3d_rotation_24), contentDescription = "this is ")
+            Icon(painter = painterResource(id = R.drawable.outline_3d_rotation_24),
+                contentDescription = "this is ")
 
         }
     }
@@ -106,8 +139,11 @@ fun CameraPreview() {
 @Composable
 fun CameraPreviewContent(cameraPosition: Boolean){
 
-
     val context = LocalContext.current
+
+    val poseDetector =
+        remember { PoseDetector(context) }
+
     AndroidView(
         factory = { ctx ->
             PreviewView(ctx)
@@ -118,11 +154,32 @@ fun CameraPreviewContent(cameraPosition: Boolean){
             val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
             cameraProviderFuture.addListener({
                 val cameraProvider = cameraProviderFuture.get()
+
                 val preview = Preview.Builder().build()
-                preview.setSurfaceProvider(previewView.surfaceProvider)
+
+                val imageAnalysis =                  // analysing the frame
+                    ImageAnalysis.Builder()
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                        .build()
+
+                imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(context))
+                {imageProxy ->
+
+                    val bitmap =
+                        imageProxy.toBitmap()
+
+                    if (bitmap != null){
+                        poseDetector.detectLive(bitmap)
+                    }
+
+                    imageProxy.close()
+
+                }
+
+                preview.surfaceProvider = previewView.surfaceProvider
 
                 val cameraSelector =
-                    if (cameraPosition == true){
+                    if (cameraPosition){
                         CameraSelector.DEFAULT_FRONT_CAMERA
                     }else{
                         CameraSelector.DEFAULT_BACK_CAMERA
@@ -133,7 +190,8 @@ fun CameraPreviewContent(cameraPosition: Boolean){
                 cameraProvider.bindToLifecycle(
                     context as ComponentActivity,
                     cameraSelector,
-                    preview
+                    preview,
+                    imageAnalysis
                 )
             }, ContextCompat.getMainExecutor(context))
         }
@@ -142,23 +200,7 @@ fun CameraPreviewContent(cameraPosition: Boolean){
 
 }
 
-//@Composable
-//fun Hello(){
-//    Box(modifier = Modifier
-//        .padding(20.dp)
-//        .background(color = Color.Red)
-//
-//    ){
-//        Text(text = "Hello World",
-//            modifier = Modifier
-//                .padding(5.dp),
-//            color = Color.Blue,
-//            fontSize = 12.sp
-//        )
-//
-//
-//    }
-//}
+
 
 
 

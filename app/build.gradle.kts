@@ -61,4 +61,5 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     debugImplementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.activity:activity-compose:1.11.0")
+    implementation("com.google.mediapipe:tasks-vision:0.10.14")
 }
