@@ -28,14 +28,22 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.nio.file.WatchEvent
 
 class MainActivity : AppCompatActivity() {
 
@@ -74,78 +82,62 @@ class MainActivity : AppCompatActivity() {
 @Composable
 fun CameraPreview() {
 
-    Column {
-        Box(modifier = Modifier
-            .padding(start = 18.dp, top = 30.dp)
-            .background(color = Color.Red)
+    var isFrontCamera by remember { mutableStateOf(false) }
+    Box(modifier = Modifier.fillMaxSize()){
+        CameraPreviewContent(
+            cameraPosition = isFrontCamera
+        )
 
-        ){
-            Text(text = "Camera is opened",
-                modifier = Modifier,
-                color = Color.Blue,
-                fontSize = 15.sp
-            )
-
+        Button(onClick = {isFrontCamera = !isFrontCamera},
+            modifier = Modifier
+                .align(androidx.compose.ui.Alignment.BottomEnd)
+                .padding(10.dp),
+            shape = CircleShape
+                ) {
+            Icon(painter = painterResource(id = R.drawable.outline_3d_rotation_24), contentDescription = "this is ")
 
         }
-
-        Box(modifier = Modifier.padding(20.dp)
-            ){
-
-            val context = LocalContext.current
-
-            AndroidView(
-                factory = { ctx ->
-
-                    val previewView = PreviewView(ctx)
-
-                    val cameraProviderFuture =
-                        ProcessCameraProvider.getInstance(ctx)
-
-                    cameraProviderFuture.addListener({
-
-                        val cameraProvider =
-                            cameraProviderFuture.get()
-
-                        val preview =
-                            Preview.Builder().build()
-
-                        preview.surfaceProvider =
-                            previewView.surfaceProvider
-
-                        val cameraSelector =
-                            CameraSelector.DEFAULT_BACK_CAMERA
-
-                        cameraProvider.unbindAll()
-
-                        cameraProvider.bindToLifecycle(
-                            context as ComponentActivity,
-                            cameraSelector,
-                            preview
-                        )
-
-                    }, ContextCompat.getMainExecutor(ctx))
-
-                    previewView
-                }
-            )
-        }
-
-        Box(modifier = Modifier.fillMaxSize()){
-            Card(
-                modifier = Modifier
-                    .padding(100.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White.copy(alpha = 0.1f)
-                )
-            ) {
-                Text(text = "Hello world",
-                    modifier = Modifier.padding(20.dp))
-            }
-        }
-
     }
+
+
+
+}
+
+@Composable
+fun CameraPreviewContent(cameraPosition: Boolean){
+
+
+    val context = LocalContext.current
+    AndroidView(
+        factory = { ctx ->
+            PreviewView(ctx)
+        },
+        update = {
+            previewView ->
+
+            val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+            cameraProviderFuture.addListener({
+                val cameraProvider = cameraProviderFuture.get()
+                val preview = Preview.Builder().build()
+                preview.setSurfaceProvider(previewView.surfaceProvider)
+
+                val cameraSelector =
+                    if (cameraPosition == true){
+                        CameraSelector.DEFAULT_FRONT_CAMERA
+                    }else{
+                        CameraSelector.DEFAULT_BACK_CAMERA
+
+                    }
+                cameraProvider.unbindAll()
+
+                cameraProvider.bindToLifecycle(
+                    context as ComponentActivity,
+                    cameraSelector,
+                    preview
+                )
+            }, ContextCompat.getMainExecutor(context))
+        }
+    )
 
 
 }
