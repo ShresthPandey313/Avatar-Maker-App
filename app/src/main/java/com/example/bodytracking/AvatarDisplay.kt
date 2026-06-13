@@ -20,7 +20,7 @@ fun AvatarOverlay() {
         modifier = Modifier.fillMaxSize()
     ) {
 
-        // ===== HEAD =====
+        //  ------------Head -----------------
 
         val nose = landmarks[0]
 
@@ -35,7 +35,7 @@ fun AvatarOverlay() {
             center = headCenter
         )
 
-        // ===== LEFT ARM =====
+        //--------------left Arm -------------------------
 
         val leftShoulder = Offset(
             landmarks[11].first * size.width,
@@ -66,7 +66,7 @@ fun AvatarOverlay() {
             strokeWidth = 25f
         )
 
-        // ===== RIGHT ARM =====
+        //---------------Right arm--------------------
 
         val rightShoulder = Offset(
             landmarks[12].first * size.width,
@@ -97,7 +97,7 @@ fun AvatarOverlay() {
             strokeWidth = 25f
         )
 
-        // ===== LEFT LEG =====
+        // --------------------left leg------------------
 
         val leftHip = Offset(
             landmarks[23].first * size.width,
@@ -128,7 +128,7 @@ fun AvatarOverlay() {
             strokeWidth = 30f
         )
 
-        // ===== RIGHT LEG =====
+        //--------------Right leg-----------
 
         val rightHip = Offset(
             landmarks[24].first * size.width,
@@ -159,7 +159,7 @@ fun AvatarOverlay() {
             strokeWidth = 30f
         )
 
-        // ===== TORSO =====
+        //----------------------torso-----
 
         drawLine(
             color = Color.Green,

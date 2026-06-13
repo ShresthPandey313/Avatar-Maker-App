@@ -24,13 +24,17 @@ import androidx.activity.compose.setContent
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fitInside
 import androidx.compose.foundation.layout.height
@@ -49,6 +53,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.BottomCenter
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
@@ -99,6 +104,7 @@ class MainActivity : AppCompatActivity() {
 
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CameraPreview() {
 
@@ -122,7 +128,8 @@ fun CameraPreview() {
 
         var showAvatar by remember { mutableStateOf(false) }
         if(showAvatar){
-            AvatarOverlay()
+//            AvatarOverlay()
+            AvatarImageOverlay()
         }
 
         var measurementBody by remember { mutableStateOf(false) }
@@ -147,11 +154,12 @@ fun CameraPreview() {
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 30.dp)
+                .width(320.dp)
+                .height(80.dp)
         ){
             Box(
                 modifier = Modifier
-                    .width(320.dp)
-                    .height(80.dp)
+                    .fillMaxSize()
                     .clip(RoundedCornerShape(40.dp))
                     .background(Color.White.copy(alpha = 0.12f))
                     .border(
@@ -161,77 +169,92 @@ fun CameraPreview() {
                     )
             )
 
-            val listState = rememberLazyListState(
-                initialFirstVisibleItemIndex = 2
-            )
+//            val listState = rememberLazyListState(
+//                initialFirstVisibleItemIndex = 2
+//            )
+//
+//            val snapFingerBehavior = rememberSnapFlingBehavior(lazyListState = listState)
 
-            LazyRow(
-                state = listState,
-                modifier = Modifier
-                    .matchParentSize()
-                    .padding(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.spacedBy(15.dp),
+            val leftListState = rememberLazyListState()
+            val rightListState = rememberLazyListState()
+
+            Row(
+                modifier = Modifier.fillMaxSize()
+                    .clip(RoundedCornerShape(40.dp)),
                 verticalAlignment = Alignment.CenterVertically
-            ){
-                item {
-                    Button(
-                        onClick = {
+            ) {
+                LazyRow(
+                    state = leftListState,
+                    flingBehavior = rememberSnapFlingBehavior(lazyListState = leftListState),
+                    modifier = Modifier.weight(1f).height(80.dp)
+                        .clip(RoundedCornerShape(40.dp)),
+                    horizontalArrangement = Arrangement.spacedBy(15.dp, Alignment.End), // Align right to pack items towards center
+                    verticalAlignment = Alignment.CenterVertically,
+                    contentPadding = PaddingValues(start = 16.dp, end = 8.dp)
+                ) {
+                    item {
+                        Button(
+                            modifier = Modifier
+                                .padding(15.dp),
+                            onClick = {
 
-                            if (!torseOverlay){
-                                torseOverlay = true
-                            }else{
-                                torseOverlay = false
-                            }
+                                if (!torseOverlay){
+                                    torseOverlay = true
+                                }else{
+                                    torseOverlay = false
+                                }
 
-                        }) {
-                        Text(text = "torso")
-                    }
-
-                }
-
-
-                item {
-                    Button(
-                        onClick = {
-
-                            if (!measurementBody){
-                                measurementBody = true
-                            }else{
-                                measurementBody = false
-                            }
-
-                    }) {
-                        Text(text = "size")
-                    }
-
-                }
-
-                item{
-                    Button( modifier = Modifier
-                        .padding(10.dp),
-                        shape = CircleShape,
-                        onClick = {
-                            if(!showShirt){
-                                showShirt = true
-                            }else{
-                                showShirt = false
-                            }
+                            }) {
+                            Text(text = "torso")
                         }
-                    ) {
 
-                        Icon(painter = painterResource(R.drawable.icons8_t_shirt_90),"dg")
+                    }
 
+
+                    item {
+                        Button(
+                            modifier = Modifier
+                                .padding(15.dp),
+                            onClick = {
+
+                                if (!measurementBody){
+                                    measurementBody = true
+                                }else{
+                                    measurementBody = false
+                                }
+
+                            }) {
+                            Text(text = "size")
+                        }
+
+                    }
+
+                    item{
+                        Button( modifier = Modifier
+                            .padding(10.dp),
+                            shape = CircleShape,
+                            onClick = {
+                                if(!showShirt){
+                                    showShirt = true
+                                }else{
+                                    showShirt = false
+                                }
+                            }
+                        ) {
+
+                            Icon(painter = painterResource(R.drawable.icons8_t_shirt_90),"dg")
+
+                        }
                     }
                 }
 
+                Box(modifier = Modifier.width(60.dp),
+                    contentAlignment = Alignment.Center){
 
-                item {
                     Box(
                         modifier = Modifier
                             .size(60.dp)
                             .clip(CircleShape)
-//                        .fitInside(CircleShape)
-                            .height(5.dp)
                             .background(Color.White)
                             .clickable
 
@@ -284,25 +307,38 @@ fun CameraPreview() {
 //                    Icon(painter = painterResource(R.drawable.icons8_t_shirt_90),"h")
 
                     }
+
                 }
 
-                item {
+                LazyRow(
+                    state = rightListState,
+                    flingBehavior = rememberSnapFlingBehavior(lazyListState = rightListState),
+                    modifier = Modifier.weight(1f).height(80.dp)
+                        .clip(RoundedCornerShape(40.dp)),
+                    horizontalArrangement = Arrangement.spacedBy(15.dp, Alignment.Start), // Align left to pack items towards center
+                    verticalAlignment = Alignment.CenterVertically,
+                    contentPadding = PaddingValues(start = 8.dp, end = 16.dp)
+                ){
+                    item {
 
-                    Button(onClick = {isFrontCamera = !isFrontCamera},
-                        modifier = Modifier
+                        Button(onClick = {isFrontCamera = !isFrontCamera},
+                            modifier = Modifier
 
-                            .padding(10.dp),
-                        shape = CircleShape
-                    ) {
-                        Icon(painter = painterResource(id = R.drawable.outline_3d_rotation_24),
-                            contentDescription = "this is ")
+                                .padding(15.dp),
+                            shape = CircleShape
+                        ) {
+                            Icon(painter = painterResource(id = R.drawable.outline_3d_rotation_24),
+                                contentDescription = "this is ")
 
+                        }
                     }
-                }
 
-                item {
+                    item {
 
-                        Button(onClick = {
+                        Button(
+                            modifier = Modifier
+                                .padding(15.dp),
+                            onClick = {
                             if(!showAvatar){
                                 showAvatar = true
                             }else{
@@ -311,34 +347,204 @@ fun CameraPreview() {
                         }) {
                             Text(text = "avatar")
 
-                    }
-                }
-
-                item {
-                    Button(
-                        onClick = {
-
-                            if (!poseDisplay){
-                                poseDisplay = true
-                            }else{
-                                poseDisplay = false
-                            }
-
-                        }) {
-                        Text(text = "torso")
+                        }
                     }
 
+                    item {
+                        Button(
+                            modifier = Modifier
+                                .padding(15.dp),
+                            onClick = {
+
+                                if (!poseDisplay){
+                                    poseDisplay = true
+                                }else{
+                                    poseDisplay = false
+                                }
+
+                            }) {
+                            Text(text = "torso")
+                        }
+
+                    }
+
                 }
-
-
-
-
-
-
-
-
 
             }
+
+//            LazyRow(
+//                state = listState,
+//                flingBehavior = snapFingerBehavior,
+//                modifier = Modifier
+//                    .matchParentSize()
+//                    .padding(horizontal = 20.dp),
+//                horizontalArrangement = Arrangement.spacedBy(15.dp),
+//                verticalAlignment = Alignment.CenterVertically
+//            ){
+//                item {
+//                    Button(
+//                        onClick = {
+//
+//                            if (!torseOverlay){
+//                                torseOverlay = true
+//                            }else{
+//                                torseOverlay = false
+//                            }
+//
+//                        }) {
+//                        Text(text = "torso")
+//                    }
+//
+//                }
+//
+//
+//                item {
+//                    Button(
+//                        onClick = {
+//
+//                            if (!measurementBody){
+//                                measurementBody = true
+//                            }else{
+//                                measurementBody = false
+//                            }
+//
+//                    }) {
+//                        Text(text = "size")
+//                    }
+//
+//                }
+//
+//                item{
+//                    Button( modifier = Modifier
+//                        .padding(10.dp),
+//                        shape = CircleShape,
+//                        onClick = {
+//                            if(!showShirt){
+//                                showShirt = true
+//                            }else{
+//                                showShirt = false
+//                            }
+//                        }
+//                    ) {
+//
+//                        Icon(painter = painterResource(R.drawable.icons8_t_shirt_90),"dg")
+//
+//                    }
+//                }
+//
+//
+//
+//                item {
+//                    Spacer( modifier = Modifier.width(60.dp))
+//                }
+//
+//                item {
+//
+//                    Button(onClick = {isFrontCamera = !isFrontCamera},
+//                        modifier = Modifier
+//
+//                            .padding(10.dp),
+//                        shape = CircleShape
+//                    ) {
+//                        Icon(painter = painterResource(id = R.drawable.outline_3d_rotation_24),
+//                            contentDescription = "this is ")
+//
+//                    }
+//                }
+//
+//                item {
+//
+//                        Button(onClick = {
+//                            if(!showAvatar){
+//                                showAvatar = true
+//                            }else{
+//                                showAvatar = false
+//                            }
+//                        }) {
+//                            Text(text = "avatar")
+//
+//                    }
+//                }
+//
+//                item {
+//                    Button(
+//                        onClick = {
+//
+//                            if (!poseDisplay){
+//                                poseDisplay = true
+//                            }else{
+//                                poseDisplay = false
+//                            }
+//
+//                        }) {
+//                        Text(text = "torso")
+//                    }
+//
+//                }
+//
+//
+//            }
+//            Box(modifier = Modifier.matchParentSize(),
+//                contentAlignment = Alignment.Center){
+//
+//                Box(
+//                    modifier = Modifier
+//                        .size(60.dp)
+//                        .clip(CircleShape)
+//                        .background(Color.White)
+//                        .clickable
+//
+//                        {
+//
+//                            val contentValues = ContentValues().apply {
+//                                put(MediaStore.MediaColumns.DISPLAY_NAME, "photo_${System.currentTimeMillis()}.jpg")
+//                                put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+//                                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/BodyTracking")
+//                            }
+//
+//                            val outputOptions =
+//                                ImageCapture.OutputFileOptions.Builder(
+//                                    context.contentResolver,
+//                                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+//                                    contentValues
+//                                ).build()
+//
+//                            val photoFile = File(
+//                                context.filesDir,
+//                                "photo.jpg"
+//                            )
+//
+////                    val outputOptions =
+////                        ImageCapture.OutputFileOptions
+////                            .Builder(photoFile)
+////                            .build()
+//
+//                            imageCapture.takePicture(
+//                                outputOptions,
+//                                ContextCompat.getMainExecutor(context),
+//                                object : ImageCapture.OnImageSavedCallback {
+//
+//                                    override fun onImageSaved(
+//                                        outputFileResults: ImageCapture.OutputFileResults
+//                                    ) {
+//                                        Log.d("Camera", "Saved")
+//                                        Log.d("path", "${outputFileResults.savedUri}")
+//                                    }
+//
+//                                    override fun onError(
+//                                        exception: ImageCaptureException
+//                                    ) {
+//                                        Log.e("Camera", "Error", exception)
+//                                    }
+//                                }
+//                            )
+//                        }
+//                ) {
+////                    Icon(painter = painterResource(R.drawable.icons8_t_shirt_90),"h")
+//
+//                }
+//
+//            }
 
         }
 
