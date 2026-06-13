@@ -45,7 +45,7 @@ class PoseDetector(
 
 
 
-        Log.d("pose_test", "pose detected : ${result.landmarks().size}")
+//        Log.d("pose_test", "pose detected : ${result.landmarks().size}")
 
     }
 
@@ -80,19 +80,19 @@ class PoseDetector(
 
             if(frameCounter % 15 == 0){
 
-                Log.d(
-                    "POSE_DEBUG",
-                    """
-        Nose: ${nose.x()}, ${nose.y()}
-        Left Shoulder: ${leftShoulder.x()}, ${leftShoulder.y()}
-        Right Shoulder: ${rightShoulder.x()}, ${rightShoulder.y()}
-        """.trimIndent()
-                )
+//                Log.d(
+//                    "POSE_DEBUG",
+//                    """
+//        Nose: ${nose.x()}, ${nose.y()}
+//        Left Shoulder: ${leftShoulder.x()}, ${leftShoulder.y()}
+//        Right Shoulder: ${rightShoulder.x()}, ${rightShoulder.y()}
+//        """.trimIndent()
+//                )
 
-                Log.d(
-                    "POSE_CONFIDENCE",
-                    "x=${nose.x()} y=${nose.y()} visibility=${nose.visibility().orElse(0f)}"
-                )
+//                Log.d(
+//                    "POSE_CONFIDENCE",
+//                    "x=${nose.x()} y=${nose.y()} visibility=${nose.visibility().orElse(0f)}"
+//                )
 
 //                Log.d(
 //                    "IMAGE_FORMAT",
