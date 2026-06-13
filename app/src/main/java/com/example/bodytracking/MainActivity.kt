@@ -3,6 +3,7 @@ package com.example.bodytracking
 import android.Manifest
 import android.content.ContentValues
 import android.content.pm.PackageManager
+import android.graphics.drawable.Icon
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
@@ -23,21 +24,37 @@ import androidx.activity.compose.setContent
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.SegmentedButtonDefaults.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import java.io.File
 import java.util.concurrent.Executors
 
@@ -120,89 +137,129 @@ fun CameraPreview() {
         )
 
         TorsoOverlay()
-        ShirtOverlay()
+//        ShirtOverlay()
+        MeasurementDisplay()
         PoseDisplay()
 
-        Row (modifier = Modifier
-            .align(androidx.compose.ui.Alignment.BottomEnd)
-            .padding(10.dp)){
+        var showShirt by remember { mutableStateOf(false) }
+        if(showShirt){
+            ShirtOverlay()
+        }
 
-            Button( modifier = Modifier
-                .padding(10.dp),
-                shape = CircleShape,
-                onClick = {}
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 30.dp)
+        ){
+            Box(
+                modifier = Modifier
+                    .width(300.dp)
+                    .height(80.dp)
+                    .clip(RoundedCornerShape(40.dp))
+                    .background(Color.White.copy(alpha = 0.12f))
+                    .border(
+                        1.dp,
+                        Color.White.copy(alpha = 0.2f),
+                        RoundedCornerShape(40.dp)
+                    )
+            )
+
+            Row(
+                modifier = Modifier
+                    .matchParentSize()
+                    .padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ){
+
+                Button( modifier = Modifier
+                    .padding(10.dp),
+                    shape = CircleShape,
+                    onClick = {
+                        if(!showShirt){
+                            showShirt = true
+                        }else{
+                            showShirt = false
+                        }
+                    }
                 ) {
 
-                Text(text = "garments")
+                    Text(text = "gar")
 
-            }
+                }
 
+                Box(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clip(CircleShape)
+                        .height(5.dp)
+                        .background(Color.White)
+                        .clickable
 
-            Button(
-                modifier = Modifier
+                   {
 
-                    .padding(10.dp),
-                shape = CircleShape,
-                onClick = {
+                        val contentValues = ContentValues().apply {
+                            put(MediaStore.MediaColumns.DISPLAY_NAME, "photo_${System.currentTimeMillis()}.jpg")
+                            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+                            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/BodyTracking")
+                        }
 
-                    val contentValues = ContentValues().apply {
-                        put(MediaStore.MediaColumns.DISPLAY_NAME, "photo_${System.currentTimeMillis()}.jpg")
-                        put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-                        put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/BodyTracking")
-                    }
+                        val outputOptions =
+                            ImageCapture.OutputFileOptions.Builder(
+                                context.contentResolver,
+                                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                                contentValues
+                            ).build()
 
-                    val outputOptions =
-                        ImageCapture.OutputFileOptions.Builder(
-                            context.contentResolver,
-                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                            contentValues
-                        ).build()
-
-                    val photoFile = File(
-                        context.filesDir,
-                        "photo.jpg"
-                    )
+                        val photoFile = File(
+                            context.filesDir,
+                            "photo.jpg"
+                        )
 
 //                    val outputOptions =
 //                        ImageCapture.OutputFileOptions
 //                            .Builder(photoFile)
 //                            .build()
 
-                    imageCapture.takePicture(
-                        outputOptions,
-                        ContextCompat.getMainExecutor(context),
-                        object : ImageCapture.OnImageSavedCallback {
+                        imageCapture.takePicture(
+                            outputOptions,
+                            ContextCompat.getMainExecutor(context),
+                            object : ImageCapture.OnImageSavedCallback {
 
-                            override fun onImageSaved(
-                                outputFileResults: ImageCapture.OutputFileResults
-                            ) {
-                                Log.d("Camera", "Saved")
-                                Log.d("path", "${outputFileResults.savedUri}")
-                            }
+                                override fun onImageSaved(
+                                    outputFileResults: ImageCapture.OutputFileResults
+                                ) {
+                                    Log.d("Camera", "Saved")
+                                    Log.d("path", "${outputFileResults.savedUri}")
+                                }
 
-                            override fun onError(
-                                exception: ImageCaptureException
-                            ) {
-                                Log.e("Camera", "Error", exception)
+                                override fun onError(
+                                    exception: ImageCaptureException
+                                ) {
+                                    Log.e("Camera", "Error", exception)
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
+                ) {
+
                 }
-            ) {
-                Text("Capture")
+
+                Button(onClick = {isFrontCamera = !isFrontCamera},
+                    modifier = Modifier
+
+                        .padding(10.dp),
+                    shape = CircleShape
+                ) {
+                    Icon(painter = painterResource(id = R.drawable.outline_3d_rotation_24),
+                        contentDescription = "this is ")
+
+                }
+
+
+
             }
 
-
-            Button(onClick = {isFrontCamera = !isFrontCamera},
-                modifier = Modifier
-
-                    .padding(10.dp),
-                shape = CircleShape
-            ) {
-                Icon(painter = painterResource(id = R.drawable.outline_3d_rotation_24),
-                    contentDescription = "this is ")
-
-            }
         }
 
     }

@@ -52,6 +52,8 @@ class PoseDetector(
 
     fun detectLive(bitmap: Bitmap) {
 
+
+
         val mpImage =
             BitmapImageBuilder(bitmap)
                 .build()
@@ -100,6 +102,53 @@ class PoseDetector(
 
 
             val pose = result.landmarks()[0]
+
+            val leftShoulders = pose[11]
+            val rightShoulders = pose[12]
+
+            val leftHip = pose[23]
+
+            val shoulderWidth =
+                kotlin.math.sqrt(
+                    (
+                            rightShoulder.x() -
+                                    leftShoulder.x()
+                            ).let { it * it } +
+
+                            (
+                                    rightShoulder.y() -
+                                            leftShoulder.y()
+                                    ).let { it * it }
+                )
+
+            val torsoHeight =
+                kotlin.math.sqrt(
+                    (
+                            leftHip.x() -
+                                    leftShoulder.x()
+                            ).let { it * it } +
+
+                            (
+                                    leftHip.y() -
+                                            leftShoulder.y()
+                                    ).let { it * it }
+                )
+
+            BodyMeasurement.torsoHeight.value = torsoHeight
+            BodyMeasurement.shoulderWidth.value = shoulderWidth
+
+            BodyMeasurement.bodySize.value =
+                when {
+
+                    shoulderWidth < 0.15f ->
+                        "Small"
+
+                    shoulderWidth < 0.25f ->
+                        "Medium"
+
+                    else ->
+                        "Large"
+                }
 
             pose.forEach { landmark ->
 
