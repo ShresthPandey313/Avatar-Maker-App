@@ -29,25 +29,30 @@ fun PoseDisplay(){
         modifier = Modifier.fillMaxSize()
     ) {
 
+        val landmarks = PoseState.landmark.toList()
+
         SkeletonConnections.forEach { connection ->
             val startIndex = connection.first
             val endIndex = connection.second
 
-            if (startIndex < PoseState.landmark.size &&
-                endIndex < PoseState.landmark.size){
+            if (startIndex < landmarks.size &&
+                endIndex < landmarks.size){
 
-                val startPoint = PoseState.landmark[startIndex]
-                val endPoint = PoseState.landmark[endIndex]
+                val start =
+                    landmarks[startIndex]
+
+                val end =
+                    landmarks[endIndex]
 
                 drawLine(
                     color = Color.Red,
                     start = Offset(
-                        startPoint.first * size.width,
-                        startPoint.second * size.height
+                        start.first * size.width,
+                        start.second * size.height
                     ),
                     end = Offset(
-                        endPoint.first * size.width,
-                        endPoint.second * size.height
+                        end.first * size.width,
+                        end.second * size.height
                 ),strokeWidth = 10f
                 )
             }
@@ -55,7 +60,9 @@ fun PoseDisplay(){
 
         if (PoseState.landmark.isNotEmpty()) {
 
-            PoseState.landmark.forEach { it ->
+
+
+            landmarks.forEach { it ->
                 drawCircle(
                     color = Color.Red,
                     radius = 10f,

@@ -35,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import java.io.File
@@ -118,14 +119,30 @@ fun CameraPreview() {
             imageCapture = imageCapture
         )
 
+        TorsoOverlay()
+        ShirtOverlay()
         PoseDisplay()
 
         Row (modifier = Modifier
             .align(androidx.compose.ui.Alignment.BottomEnd)
             .padding(10.dp)){
 
+            Button( modifier = Modifier
+                .padding(10.dp),
+                shape = CircleShape,
+                onClick = {}
+                ) {
+
+                Text(text = "garments")
+
+            }
+
 
             Button(
+                modifier = Modifier
+
+                    .padding(10.dp),
+                shape = CircleShape,
                 onClick = {
 
                     val contentValues = ContentValues().apply {
@@ -188,15 +205,7 @@ fun CameraPreview() {
             }
         }
 
-
-
-
-
-
     }
-
-
-
 }
 
 @Composable
