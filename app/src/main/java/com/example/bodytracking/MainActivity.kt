@@ -32,10 +32,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fitInside
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -52,6 +55,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -86,36 +90,10 @@ class MainActivity : AppCompatActivity() {
 
         setContent {
             if (hasCameraPermission.value) {
-//                Hello()
-//                val detector = PoseDetector(this)
-//                LaunchedEffect(Unit) {
-//                    val inputStream =
-//                        assets.open("person.jpg")
-//
-//                    val bitmap =
-//                        BitmapFactory.decodeStream(inputStream)
-//
-//                    detector.detectLive(bitmap)
-//                }
+
                 CameraPreview()
             }
         }
-
-
-//        setContent {
-//            if (hasCameraPermission.value) {
-//
-//                val inputStream = assets.open("person.jpg")
-//
-//                val bitmap =
-//                    BitmapFactory.decodeStream(inputStream)
-//
-//                Log.d(
-//                    "POSE_TEST",
-//                    "Bitmap loaded ${bitmap.width} x ${bitmap.height}"
-//                )
-//            }
-//        }
 
     }
 
@@ -136,15 +114,34 @@ fun CameraPreview() {
             imageCapture = imageCapture
         )
 
-        TorsoOverlay()
-//        ShirtOverlay()
-        MeasurementDisplay()
-        PoseDisplay()
 
         var showShirt by remember { mutableStateOf(false) }
         if(showShirt){
             ShirtOverlay()
         }
+
+        var showAvatar by remember { mutableStateOf(false) }
+        if(showAvatar){
+            AvatarOverlay()
+        }
+
+        var measurementBody by remember { mutableStateOf(false) }
+        if(measurementBody){
+            MeasurementDisplay()
+        }
+
+        var torseOverlay by remember { mutableStateOf(false) }
+        if(torseOverlay){
+            TorsoOverlay()
+        }
+
+        var poseDisplay by remember { mutableStateOf(false) }
+        if(poseDisplay){
+            PoseDisplay()
+        }
+
+
+
 
         Box(
             modifier = Modifier
@@ -153,7 +150,7 @@ fun CameraPreview() {
         ){
             Box(
                 modifier = Modifier
-                    .width(300.dp)
+                    .width(320.dp)
                     .height(80.dp)
                     .clip(RoundedCornerShape(40.dp))
                     .background(Color.White.copy(alpha = 0.12f))
@@ -164,97 +161,180 @@ fun CameraPreview() {
                     )
             )
 
-            Row(
+            val listState = rememberLazyListState(
+                initialFirstVisibleItemIndex = 2
+            )
+
+            LazyRow(
+                state = listState,
                 modifier = Modifier
                     .matchParentSize()
                     .padding(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(15.dp),
+                verticalAlignment = Alignment.CenterVertically
             ){
+                item {
+                    Button(
+                        onClick = {
 
-                Button( modifier = Modifier
-                    .padding(10.dp),
-                    shape = CircleShape,
-                    onClick = {
-                        if(!showShirt){
-                            showShirt = true
-                        }else{
-                            showShirt = false
-                        }
+                            if (!torseOverlay){
+                                torseOverlay = true
+                            }else{
+                                torseOverlay = false
+                            }
+
+                        }) {
+                        Text(text = "torso")
                     }
-                ) {
-
-                    Text(text = "gar")
 
                 }
 
-                Box(
-                    modifier = Modifier
-                        .size(60.dp)
-                        .clip(CircleShape)
-                        .height(5.dp)
-                        .background(Color.White)
-                        .clickable
 
-                   {
+                item {
+                    Button(
+                        onClick = {
 
-                        val contentValues = ContentValues().apply {
-                            put(MediaStore.MediaColumns.DISPLAY_NAME, "photo_${System.currentTimeMillis()}.jpg")
-                            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-                            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/BodyTracking")
+                            if (!measurementBody){
+                                measurementBody = true
+                            }else{
+                                measurementBody = false
+                            }
+
+                    }) {
+                        Text(text = "size")
+                    }
+
+                }
+
+                item{
+                    Button( modifier = Modifier
+                        .padding(10.dp),
+                        shape = CircleShape,
+                        onClick = {
+                            if(!showShirt){
+                                showShirt = true
+                            }else{
+                                showShirt = false
+                            }
                         }
+                    ) {
 
-                        val outputOptions =
-                            ImageCapture.OutputFileOptions.Builder(
-                                context.contentResolver,
-                                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                                contentValues
-                            ).build()
+                        Icon(painter = painterResource(R.drawable.icons8_t_shirt_90),"dg")
 
-                        val photoFile = File(
-                            context.filesDir,
-                            "photo.jpg"
-                        )
+                    }
+                }
+
+
+                item {
+                    Box(
+                        modifier = Modifier
+                            .size(60.dp)
+                            .clip(CircleShape)
+//                        .fitInside(CircleShape)
+                            .height(5.dp)
+                            .background(Color.White)
+                            .clickable
+
+                            {
+
+                                val contentValues = ContentValues().apply {
+                                    put(MediaStore.MediaColumns.DISPLAY_NAME, "photo_${System.currentTimeMillis()}.jpg")
+                                    put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+                                    put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/BodyTracking")
+                                }
+
+                                val outputOptions =
+                                    ImageCapture.OutputFileOptions.Builder(
+                                        context.contentResolver,
+                                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                                        contentValues
+                                    ).build()
+
+                                val photoFile = File(
+                                    context.filesDir,
+                                    "photo.jpg"
+                                )
 
 //                    val outputOptions =
 //                        ImageCapture.OutputFileOptions
 //                            .Builder(photoFile)
 //                            .build()
 
-                        imageCapture.takePicture(
-                            outputOptions,
-                            ContextCompat.getMainExecutor(context),
-                            object : ImageCapture.OnImageSavedCallback {
+                                imageCapture.takePicture(
+                                    outputOptions,
+                                    ContextCompat.getMainExecutor(context),
+                                    object : ImageCapture.OnImageSavedCallback {
 
-                                override fun onImageSaved(
-                                    outputFileResults: ImageCapture.OutputFileResults
-                                ) {
-                                    Log.d("Camera", "Saved")
-                                    Log.d("path", "${outputFileResults.savedUri}")
-                                }
+                                        override fun onImageSaved(
+                                            outputFileResults: ImageCapture.OutputFileResults
+                                        ) {
+                                            Log.d("Camera", "Saved")
+                                            Log.d("path", "${outputFileResults.savedUri}")
+                                        }
 
-                                override fun onError(
-                                    exception: ImageCaptureException
-                                ) {
-                                    Log.e("Camera", "Error", exception)
-                                }
+                                        override fun onError(
+                                            exception: ImageCaptureException
+                                        ) {
+                                            Log.e("Camera", "Error", exception)
+                                        }
+                                    }
+                                )
                             }
-                        )
+                    ) {
+//                    Icon(painter = painterResource(R.drawable.icons8_t_shirt_90),"h")
+
                     }
-                ) {
+                }
+
+                item {
+
+                    Button(onClick = {isFrontCamera = !isFrontCamera},
+                        modifier = Modifier
+
+                            .padding(10.dp),
+                        shape = CircleShape
+                    ) {
+                        Icon(painter = painterResource(id = R.drawable.outline_3d_rotation_24),
+                            contentDescription = "this is ")
+
+                    }
+                }
+
+                item {
+
+                        Button(onClick = {
+                            if(!showAvatar){
+                                showAvatar = true
+                            }else{
+                                showAvatar = false
+                            }
+                        }) {
+                            Text(text = "avatar")
+
+                    }
+                }
+
+                item {
+                    Button(
+                        onClick = {
+
+                            if (!poseDisplay){
+                                poseDisplay = true
+                            }else{
+                                poseDisplay = false
+                            }
+
+                        }) {
+                        Text(text = "torso")
+                    }
 
                 }
 
-                Button(onClick = {isFrontCamera = !isFrontCamera},
-                    modifier = Modifier
 
-                        .padding(10.dp),
-                    shape = CircleShape
-                ) {
-                    Icon(painter = painterResource(id = R.drawable.outline_3d_rotation_24),
-                        contentDescription = "this is ")
 
-                }
+
+
+
 
 
 
