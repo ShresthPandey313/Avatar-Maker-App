@@ -137,6 +137,7 @@ fun CameraPreview() {
 //            AvatarShirtOverlay()
 //            AvatarImageOverlay()
             AvatarOverlays()
+            AvatarClothesOverlay()
         }
 
         var measurementBody by remember { mutableStateOf(false) }

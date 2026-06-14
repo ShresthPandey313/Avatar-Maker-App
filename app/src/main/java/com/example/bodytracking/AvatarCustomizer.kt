@@ -112,5 +112,23 @@ fun AvatarCustomizer() {
         ) {
             Text("Shirt 3")
         }
+
+        Button(
+            onClick = {
+                AvatarState.selectedPant.intValue =
+                    R.drawable.pant1
+            }
+        ) {
+            Text("Pant 1")
+        }
+
+        Button(
+            onClick = {
+                AvatarState.selectedPant.intValue =
+                    R.drawable.pant2
+            }
+        ) {
+            Text("Pant 2")
+        }
     }
 }
